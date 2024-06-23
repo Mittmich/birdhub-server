@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Float
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -16,12 +16,14 @@ class User(Base):
     # relationship with the EffectorAction model
     effector_actions = relationship("EffectorAction", back_populates="owner")
 
+
 class Detection(Base):
     """Model forbird detections."""
+
     __tablename__ = "detections"
 
     id = Column(Integer, primary_key=True, index=True)
-    class = Column(String, index=True)
+    detected_class = Column(String, index=True)
     detection_timestmap = Column(DateTime, index=True)
     confidence = Column(Float, index=True)
     model_version = Column(String, index=True)
@@ -29,8 +31,10 @@ class Detection(Base):
     # add many to one relationship with recorindg model
     recording_id = Column(Integer, ForeignKey("recordings.id"))
 
+
 class EffectorAction(Base):
     """Model for effector actions."""
+
     __tablename__ = "effector_actions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -39,8 +43,10 @@ class EffectorAction(Base):
     detection_timestmap = Column(DateTime, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
 
+
 class Recording(Base):
     """Model for recordings."""
+
     __tablename__ = "recordings"
 
     id = Column(Integer, primary_key=True, index=True)
