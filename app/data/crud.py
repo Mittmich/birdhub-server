@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
 
+
 from . import models, schemas
 
 
-def add_detections(db: Session, detections: list[schemas.SingleDetection]):
+def add_detections(db: Session, detections: list[schemas.SingleDetectionPost]):
     created_detections = []
+
     for detection in detections:
         db_detection = models.Detection(
             detected_class=detection.detected_class,
@@ -12,10 +14,15 @@ def add_detections(db: Session, detections: list[schemas.SingleDetection]):
             confidence=detection.confidence,
             model_version=detection.model_version,
         )
+
         db.add(db_detection)
+
         created_detections.append(db_detection)
+
     db.commit()
+
     return created_detections
+
 
 def get_detections_time_range(db: Session, start_time: str, end_time: str):
     return (
