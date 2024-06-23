@@ -1,20 +1,11 @@
-from typing import Union
-
 from pydantic import BaseModel
+from datetime import datetime
 
+class SingleDetection(BaseModel):
+    detected_class: str
+    detection_timestamp: datetime
+    confidence: float
+    model_version: str
 
-
-class UserBase(BaseModel):
-    email: str
-
-
-class UserCreate(UserBase):
-    password: str
-
-
-class User(UserBase):
-    id: int
-    is_active: bool
-
-    class Config:
-        orm_mode = True
+class DetectionPost(BaseModel):
+    detections: list[SingleDetection]

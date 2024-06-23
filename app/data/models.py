@@ -1,20 +1,6 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Float
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Float
 
 from .database import Base
-
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-    # relationship with the Detection model
-    detections = relationship("Detection", back_populates="owner")
-    # relationship with the EffectorAction model
-    effector_actions = relationship("EffectorAction", back_populates="owner")
 
 
 class Detection(Base):
@@ -24,10 +10,9 @@ class Detection(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     detected_class = Column(String, index=True)
-    detection_timestmap = Column(DateTime, index=True)
+    detection_timestamp = Column(DateTime, index=True)
     confidence = Column(Float, index=True)
     model_version = Column(String, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
     # add many to one relationship with recorindg model
     recording_id = Column(Integer, ForeignKey("recordings.id"))
 
@@ -40,8 +25,10 @@ class EffectorAction(Base):
     id = Column(Integer, primary_key=True, index=True)
     action = Column(String, index=True)
     action_timestamp = Column(DateTime, index=True)
-    detection_timestmap = Column(DateTime, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    # add many to one relationship with recording model
+    recording_id = Column(Integer, ForeignKey("recordings.id"))
+    # add relationship with detection model
+    detection_id = Column(Integer, ForeignKey("detections.id"))
 
 
 class Recording(Base):
@@ -54,4 +41,3 @@ class Recording(Base):
     recording_duration = Column(Integer, index=True)
     # add path to recording file
     recording_file_path = Column(String, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))

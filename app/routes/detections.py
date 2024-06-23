@@ -1,4 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from ..data.crud import add_detections
+from ..data.schemas import DetectionPost
+from ..data.database import get_db
 
 router = APIRouter()
 
@@ -10,6 +13,7 @@ async def read_detections():
 
 
 @router.post("/detections/", tags=["detections"])
-async def read_detections():
+async def post_detections(detections: DetectionPost, db=Depends(get_db)):
     """Add detections to the database."""
-    return {"message": "This is a placeholder for the detections endpoint."}
+    add_detections(db, detections.detections)
+    return {"message": "Detections added successfully!"}

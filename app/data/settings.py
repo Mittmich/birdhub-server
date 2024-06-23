@@ -9,3 +9,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()
+
+def get_settings_test():
+    return Settings(app_name="Birdhub (test)", database_url="sqlite://")
