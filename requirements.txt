@@ -2,5 +2,5 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic-settings
-alebmic
+alembic
 python-dotenv
