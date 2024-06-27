@@ -24,6 +24,8 @@ class EffectorAction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     action = Column(String, index=True)
+    action_metadata = Column(String)
+    detection_timestamp = Column(DateTime, index=True)
     action_timestamp = Column(DateTime, index=True)
     # add many to one relationship with recording model
     recording_id = Column(Integer, ForeignKey("recordings.id"))

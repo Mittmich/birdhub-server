@@ -1,10 +1,42 @@
+from fastapi.logger import logger
 from sqlalchemy.orm import Session
-
-
 from . import models, schemas
 
 
+def get_all_effector_actions(db: Session):
+    return db.query(models.EffectorAction).all()
+
+def add_effector_action(db: Session, effector_action: schemas.EffectorActionPost):
+    # check whether a detection with the same timestamp exists
+    db_detection = (
+        db.query(models.Detection)
+        .filter(
+            models.Detection.detection_timestamp == effector_action.detection_timestamp
+        )
+        .first()
+    )
+    if not db_detection:
+        logger.error(
+            f"No detection found with timestamp {effector_action.detection_timestamp}"
+        )
+        detection_id = None
+    else:
+        detection_id = db_detection.id
+    # add effector action to db
+    db_effector_action = models.EffectorAction(
+        action=effector_action.action,
+        action_metadata=effector_action.action_metadata,
+        detection_timestamp=effector_action.detection_timestamp,
+        action_timestamp=effector_action.action_timestamp,
+        detection_id=detection_id,
+    )
+    db.add(db_effector_action)
+    db.commit()
+    return db_effector_action
+
+
 def add_detections(db: Session, detections: list[schemas.SingleDetectionPost]):
+    """Detections can be added in bulk as they often occur together."""
     created_detections = []
 
     for detection in detections:
