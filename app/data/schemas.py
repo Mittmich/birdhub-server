@@ -5,9 +5,10 @@ from typing import Optional
 
 class EffectorActionPost(BaseModel):
     action: str
-    action_metadata: Optional[str]=None
+    action_metadata: Optional[str] = None
     detection_timestamp: datetime
     action_timestamp: datetime
+
 
 class SingleDetectionPost(BaseModel):
     detected_class: str
@@ -18,6 +19,10 @@ class SingleDetectionPost(BaseModel):
 
 class DetectionPost(BaseModel):
     detections: list[SingleDetectionPost]
+
+
+class RecordingPost(BaseModel):
+    recording_timestamp: datetime
 
 
 class DetectionGet(SingleDetectionPost):

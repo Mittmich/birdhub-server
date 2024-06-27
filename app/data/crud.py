@@ -6,6 +6,7 @@ from . import models, schemas
 def get_all_effector_actions(db: Session):
     return db.query(models.EffectorAction).all()
 
+
 def add_effector_action(db: Session, effector_action: schemas.EffectorActionPost):
     # check whether a detection with the same timestamp exists
     db_detection = (
@@ -33,6 +34,22 @@ def add_effector_action(db: Session, effector_action: schemas.EffectorActionPost
     db.add(db_effector_action)
     db.commit()
     return db_effector_action
+
+
+def get_all_recordings(db: Session):
+    return db.query(models.Recording).all()
+
+
+def add_recording(
+    db: Session, recording: schemas.RecordingPost, recording_file_path: str
+):
+    db_recording = models.Recording(
+        recording_timestamp=recording.recording_timestamp,
+        recording_file_path=recording_file_path,
+    )
+    db.add(db_recording)
+    db.commit()
+    return db_recording
 
 
 def add_detections(db: Session, detections: list[schemas.SingleDetectionPost]):

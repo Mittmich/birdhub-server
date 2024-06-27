@@ -8,7 +8,9 @@ router = APIRouter()
 
 
 @router.post("/effectorAction/", tags=["effectorAction"])
-async def post_effector_action(effect_activation: EffectorActionPost, db=Depends(get_db)):
+async def post_effector_action(
+    effect_activation: EffectorActionPost, db=Depends(get_db)
+):
     """Add effector action to the database."""
     add_effector_action(db, effect_activation)
     return {"message": "Effect activation added successfully!"}
