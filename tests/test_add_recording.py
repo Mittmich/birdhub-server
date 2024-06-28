@@ -11,7 +11,10 @@ def test_add_recording(client, tmp_upload_folder):
             files={
                 "file": ("test.mp4", f, "video/mp4"),
             },
-            data={"recording_timestamp": "2021-01-01T00:00:00"},
+            data={
+                "recording_timestamp": "2021-01-01T00:00:00",
+                "recording_end_timestamp": "2021-01-01T00:00:10",
+            },
         )
     assert response.status_code == 200
     # check if recording was added to the database

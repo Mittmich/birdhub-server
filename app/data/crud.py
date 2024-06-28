@@ -45,6 +45,7 @@ def add_recording(
 ):
     db_recording = models.Recording(
         recording_timestamp=recording.recording_timestamp,
+        recording_end_timestamp=recording.recording_end_timestamp,
         recording_file_path=recording_file_path,
     )
     db.add(db_recording)

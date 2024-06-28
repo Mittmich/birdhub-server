@@ -23,6 +23,7 @@ class DetectionPost(BaseModel):
 
 class RecordingPost(BaseModel):
     recording_timestamp: datetime
+    recording_end_timestamp: datetime
 
 
 class DetectionGet(SingleDetectionPost):

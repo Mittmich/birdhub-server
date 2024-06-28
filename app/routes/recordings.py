@@ -15,6 +15,7 @@ async def post_recording(
     file: UploadFile = File(...),
     settings: Settings = Depends(get_settings),
     recording_timestamp: datetime.datetime = Form(...),
+    recording_end_timestamp: datetime.datetime = Form(...),
 ):
     # check whether file is an mp4 basd on file extension
     if not file.filename.endswith(".mp4"):
@@ -25,5 +26,12 @@ async def post_recording(
     with open(file_path, "wb") as f:
         f.write(file.file.read())
     # Add the recording to the database
-    add_recording(db, RecordingPost(recording_timestamp=recording_timestamp), file_path)
+    add_recording(
+        db,
+        RecordingPost(
+            recording_timestamp=recording_timestamp,
+            recording_end_timestamp=recording_end_timestamp,
+        ),
+        file_path,
+    )
     return {"message": "Recording added successfully!"}

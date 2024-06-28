@@ -40,5 +40,6 @@ class Recording(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     recording_timestamp = Column(DateTime, index=True)
+    recording_end_timestamp = Column(DateTime, index=True)
     # add path to recording file
     recording_file_path = Column(String, index=True)
