@@ -7,3 +7,7 @@ uploads/*
 nginx/.htpasswd
 *.crt
 *.key
+.env
+mb-db/*
+!mb-db/.gitkeep
+.env
