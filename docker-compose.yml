@@ -5,8 +5,8 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     ports:
-      - 80:80
-      - 443:443
+      - 0.0.0.0:80:80
+      - 0.0.0.0:443:443
     volumes:
       - ./static:/var/www/html
     networks:
@@ -64,3 +64,4 @@ services:
 
 networks:
   birdhub-network:
+    driver: bridge
