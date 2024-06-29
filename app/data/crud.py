@@ -62,7 +62,6 @@ def add_detections(db: Session, detections: list[schemas.SingleDetectionPost]):
             detected_class=detection.detected_class,
             detection_timestamp=detection.detection_timestamp,
             confidence=detection.confidence,
-            model_version=detection.model_version,
         )
 
         db.add(db_detection)

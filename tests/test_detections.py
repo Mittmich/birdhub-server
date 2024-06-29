@@ -17,7 +17,6 @@ def test_add_detection(client):
                     "detected_class": "pigeon",
                     "detection_timestamp": "2021-01-01T00:00:00",
                     "confidence": 0.9,
-                    "model_version": "v1",
                 }
             ],
         },

@@ -11,8 +11,7 @@ class Detection(Base):
     id = Column(Integer, primary_key=True, index=True)
     detected_class = Column(String, index=True)
     detection_timestamp = Column(DateTime, index=True)
-    confidence = Column(Float, index=True)
-    model_version = Column(String, index=True)
+    confidence = Column(Float)
     # add many to one relationship with recorindg model
     recording_id = Column(Integer, ForeignKey("recordings.id"))
 
