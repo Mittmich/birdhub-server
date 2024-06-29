@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birdhub</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body style="overflow: auto; ">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Birdhub</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link" href="/index.html">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/detection_table.html">Detections</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/recordings.html">Recordings</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/analytics">Analytics</a>
+              </li>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+        <div class="container">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Class</th>
+                        <th scope="col">Confidence</th>
+                        <th scope="col">Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- fetch recordings -->
+<script>
+    $(document).ready(function() {
+        $.ajax({
+            url: "/api/detections",
+            type: "GET",
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function(response) {
+                // clear table
+                $("tbody").empty();
+                // add to table
+                response.forEach((detection, index) => {
+                    $("tbody").append(`
+                        <tr>
+                            <th scope="row">${index + 1}</th>
+                            <td>${detection.detected_class}</td>
+                            <td>${detection.confidence}</td>
+                            <td>${detection.detection_timestamp}</td>
+                        </tr>
+                    `);
+                });
+            },
+            error: function(error) {
+                console.log(`Error ${error}`);
+            }
+        });
+    });
+</script>
+</html>
