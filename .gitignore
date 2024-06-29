@@ -4,3 +4,6 @@ build/*
 *.db
 .vscode/*
 uploads/*
+nginx/.htpasswd
+*.crt
+*.key

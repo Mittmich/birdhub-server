@@ -1,0 +1,31 @@
+version: '3'
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./static:/var/www/html
+    networks:
+      - birdhub-network
+  fastapi:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - database_url=sqlite:////app/db/sql_app.db
+      - upload_folder=/app/uploads
+    ports:
+      - 9000:9000
+    volumes:
+      - ./uploadas:/app/uploads
+      - ./db:/app/db
+    networks:
+      - birdhub-network
+    command: bash -c "cd /app && alembic upgrade head && uvicorn app.main:app --port 9000 --host 0.0.0"
+
+networks:
+  birdhub-network:
