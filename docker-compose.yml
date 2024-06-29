@@ -21,7 +21,7 @@ services:
     ports:
       - 9000:9000
     volumes:
-      - ./uploadas:/app/uploads
+      - ./uploads:/app/uploads
       - ./db:/app/db
     networks:
       - birdhub-network

@@ -11,3 +11,4 @@ nginx/.htpasswd
 mb-db/*
 !mb-db/.gitkeep
 .env
+playground/*
