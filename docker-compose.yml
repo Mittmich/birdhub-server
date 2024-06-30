@@ -9,6 +9,7 @@ services:
       - 0.0.0.0:443:443
     volumes:
       - ./static:/var/www/html
+      - ./uploads:/var/www/uploads
     networks:
       - birdhub-network
   fastapi:

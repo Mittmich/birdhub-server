@@ -4,71 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Birdhub</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!--#include virtual="/include_bootstrap.html" -->
 </head>
 <body style="overflow: auto; ">
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="#">Birdhub</a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              <li class="nav-item">
-                <a class="nav-link" href="/index.html">Home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/detection_table.html">Detections</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/recordings.html">Recordings</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/analytics">Analytics</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+  <!--#include virtual="/navigation.html" -->
         <div class="container">
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Class</th>
-                        <th scope="col">Confidence</th>
-                        <th scope="col">Time</th>
+                        <th scope="col">Recording Start</th>
+                        <th scope="col">Recording End</th>
+                        <th scope="col">Duration [s]</th>
+                        <th scope="col">Recording link</th>
                     </tr>
                 </thead>
                 <tbody>
                 </tbody>
             </table>
+        </div>
+<!-- Modal -->
+<div class="modal fade modal-lg" id="exampleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body container">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <!-- fetch recordings -->
 <script>
+  // define functions that adds link to modal using jquery
+  function addLinkToModal(ref_element) {
+    console.log('called');
+    // get modal
+    const modal = $("#exampleModal");
+    // get modal body
+    const modalBody = modal.find(".modal-body");
+    // clear modal body
+    modalBody.empty();
+    // get link
+    var link = ref_element.getAttribute("href");
+    // reformat link to split /app
+    link = link.split('/app').join('');
+    // add link inside a video tag for mp4
+    // get width of modal content
+    const modalContent = modal.find(".modal-header");
+    var width = modalContent.outerWidth()
+    console.log(width);
+    modalBody.append(`
+     <div style="margin: 0 auto;text-align: center;">
+      <video width='90%' controls id="recordingVideo">
+      <source src="${link}" type="video/mp4">
+      Your browser does not support the video tag.
+      </video>
+      </div>
+      `)
+  }
+
     $(document).ready(function() {
         $.ajax({
-            url: "/api/detections",
+            url: "/api/recordings/",
             type: "GET",
             xhrFields: {
                 withCredentials: true
             },
             success: function(response) {
-                // clear table
-                $("tbody").empty();
+              // clear table
+              $("tbody").empty();
+              // add to table
+              console.log(response);
+              response.forEach((recording, index) => {
+                // create datetime objects
+                recording.recording_timestamp = new Date(recording.recording_timestamp);
+                recording.recording_end_timestamp = new Date(recording.recording_end_timestamp);
                 // add to table
-                response.forEach((detection, index) => {
-                    $("tbody").append(`
-                        <tr>
-                            <th scope="row">${index + 1}</th>
-                            <td>${detection.detected_class}</td>
-                            <td>${detection.confidence}</td>
-                            <td>${detection.detection_timestamp}</td>
-                        </tr>
-                    `);
-                });
+                  $("tbody").append(`
+                      <tr>
+                          <th scope="row">${index + 1}</th>
+                          <td>${recording.recording_timestamp.toLocaleString()}</td>
+                          <td>${recording.recording_end_timestamp.toLocaleString()}</td>
+                          <td>${(recording.recording_end_timestamp - recording.recording_timestamp)/1000}</td>
+                          <td><button type="button" class="btn btn-primary" data-bs-toggle="modal" href="${recording.recording_file_path}" data-bs-target="#exampleModal" onclick="addLinkToModal(this)">Listen</a></td>
+                      </tr>
+                  `);
+              });
             },
             error: function(error) {
                 console.log(`Error ${error}`);

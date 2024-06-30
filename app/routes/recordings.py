@@ -1,13 +1,17 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form
 import uuid
 import datetime
-from ..data.crud import add_recording
+from ..data.crud import add_recording, get_all_recordings
 from ..data.schemas import RecordingPost
 from ..data.database import get_db
 from ..data.settings import Settings, get_settings
 
 router = APIRouter()
 
+
+@router.get("/recordings/", tags=["recordings"])
+async def get_recordings(db=Depends(get_db)):
+    return get_all_recordings(db)
 
 @router.post("/recordings/", tags=["recordings"])
 async def post_recording(
