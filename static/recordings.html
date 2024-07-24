@@ -8,21 +8,33 @@
 </head>
 <body style="overflow: auto; ">
   <!--#include virtual="/navigation.html" -->
-        <div class="container">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Recording Start</th>
-                        <th scope="col">Recording End</th>
-                        <th scope="col">Duration [s]</th>
-                        <th scope="col">Recording link</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>
+  <!-- add filters -->
+  <div class="container">
+    <div class="dropdown" style="margin-top: 15px;margin-bottom: 15px;">
+      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Today
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item active" href="#">Today</a></li>
+        <li><a class="dropdown-item" href="#">Last week</a></li>
+        <li><a class="dropdown-item" href="#">Last month</a></li>
+        <li><a class="dropdown-item" href="#">All time</a></li>
+      </ul>
+    </div>
+      <table class="table table-striped">
+          <thead>
+              <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Recording Start</th>
+                  <th scope="col">Recording End</th>
+                  <th scope="col">Duration [s]</th>
+                  <th scope="col">Recording link</th>
+              </tr>
+          </thead>
+          <tbody>
+          </tbody>
+      </table>
+  </div>
 <!-- Modal -->
 <div class="modal fade modal-lg" id="exampleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -44,7 +56,6 @@
 <script>
   // define functions that adds link to modal using jquery
   function addLinkToModal(ref_element) {
-    console.log('called');
     // get modal
     const modal = $("#exampleModal");
     // get modal body
@@ -70,38 +81,112 @@
       `)
   }
 
-    $(document).ready(function() {
-        $.ajax({
-            url: "/api/recordings/",
-            type: "GET",
-            xhrFields: {
-                withCredentials: true
-            },
-            success: function(response) {
-              // clear table
-              $("tbody").empty();
+  function getDateString(time_frame) {
+    if (time_frame === "today"){
+      var d = new Date()
+      d.setHours(0,0,0,0);
+      return d.toISOString();
+    }
+    if (time_frame === "last_week"){
+      var d = new Date()
+      d.setDate(d.getDate() - 7);
+      d.setHours(0,0,0,0);
+      return d.toISOString();
+    }
+    if (time_frame === "last_month"){
+      var d = new Date()
+      d.setMonth(d.getMonth() - 1);
+      d.setHours(0,0,0,0);
+      return d.toISOString();
+    }
+  }
+
+  $(document).ready(function() {
+      $.ajax({
+          // default is start_time query parameter is todays time stamp from midnight
+          url: "/api/recordings/" + "?start_time=" + getDateString('today'),
+          type: "GET",
+          xhrFields: {
+              withCredentials: true
+          },
+          success: function(response) {
+            // clear table
+            $("tbody").empty();
+            // add to table
+            console.log(response);
+            response.forEach((recording, index) => {
+              // create datetime objects
+              recording.recording_timestamp = new Date(recording.recording_timestamp);
+              recording.recording_end_timestamp = new Date(recording.recording_end_timestamp);
               // add to table
-              console.log(response);
-              response.forEach((recording, index) => {
-                // create datetime objects
-                recording.recording_timestamp = new Date(recording.recording_timestamp);
-                recording.recording_end_timestamp = new Date(recording.recording_end_timestamp);
-                // add to table
-                  $("tbody").append(`
-                      <tr>
-                          <th scope="row">${index + 1}</th>
-                          <td>${recording.recording_timestamp.toLocaleString()}</td>
-                          <td>${recording.recording_end_timestamp.toLocaleString()}</td>
-                          <td>${(recording.recording_end_timestamp - recording.recording_timestamp)/1000}</td>
-                          <td><button type="button" class="btn btn-primary" data-bs-toggle="modal" href="${recording.recording_file_path}" data-bs-target="#exampleModal" onclick="addLinkToModal(this)">Video</a></td>
-                      </tr>
-                  `);
-              });
-            },
-            error: function(error) {
-                console.log(`Error ${error}`);
-            }
-        });
-    });
+                $("tbody").append(`
+                    <tr>
+                        <th scope="row">${index + 1}</th>
+                        <td>${recording.recording_timestamp.toLocaleString()}</td>
+                        <td>${recording.recording_end_timestamp.toLocaleString()}</td>
+                        <td>${(recording.recording_end_timestamp - recording.recording_timestamp)/1000}</td>
+                        <td><button type="button" class="btn btn-primary" data-bs-toggle="modal" href="${recording.recording_file_path}" data-bs-target="#exampleModal" onclick="addLinkToModal(this)">Video</a></td>
+                    </tr>
+                `);
+            });
+          },
+          error: function(error) {
+              console.log(`Error ${error}`);
+          }
+      });
+  });
+  // add event listener to dropdown to reload recordings
+  $(".dropdown-item").click(function() {
+    // get text of dropdown item
+    var text = $(this).text();
+    // get url
+    var url = "/api/recordings/";
+    if (text == "Today") {
+      url += "?start_time=" + getDateString('today');
+    } else if (text == "Last week") {
+      url += "?start_time=" + getDateString('last_week');
+    } else if (text == "Last month") {
+      url += "?strat_time=" + getDateString('last_month');
+    } else if (text == "All time") {
+      url = url
+    }
+    // set clicked element active
+    $(".dropdown-item").removeClass("active");
+    $(this).addClass("active");
+    // update button text
+    $(".btn-secondary").text(text);
+    // make ajax request
+    $.ajax({
+          url: url,
+          type: "GET",
+          xhrFields: {
+              withCredentials: true
+          },
+          success: function(response) {
+            // clear table
+            $("tbody").empty();
+            // add to table
+            console.log(response);
+            response.forEach((recording, index) => {
+              // create datetime objects
+              recording.recording_timestamp = new Date(recording.recording_timestamp);
+              recording.recording_end_timestamp = new Date(recording.recording_end_timestamp);
+              // add to table
+                $("tbody").append(`
+                    <tr>
+                        <th scope="row">${index + 1}</th>
+                        <td>${recording.recording_timestamp.toLocaleString()}</td>
+                        <td>${recording.recording_end_timestamp.toLocaleString()}</td>
+                        <td>${(recording.recording_end_timestamp - recording.recording_timestamp)/1000}</td>
+                        <td><button type="button" class="btn btn-primary" data-bs-toggle="modal" href="${recording.recording_file_path}" data-bs-target="#exampleModal" onclick="addLinkToModal(this)">Video</a></td>
+                    </tr>
+                `);
+            });
+          },
+          error: function(error) {
+              console.log(`Error ${error}`);
+          }
+      });
+  });
 </script>
 </html>

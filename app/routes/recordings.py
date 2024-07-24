@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form
 import uuid
+from typing import Optional
 import datetime
-from ..data.crud import add_recording, get_all_recordings
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form, Query
+from ..data.crud import add_recording, get_recordings
 from ..data.schemas import RecordingPost
 from ..data.database import get_db
 from ..data.settings import Settings, get_settings
@@ -10,8 +11,17 @@ router = APIRouter()
 
 
 @router.get("/recordings/", tags=["recordings"])
-async def get_recordings(db=Depends(get_db)):
-    return get_all_recordings(db)
+async def get_recordings_route(
+    db=Depends(get_db),
+    start_time: Optional[datetime.datetime] = None,
+    end_time: Optional[datetime.datetime]= None
+    ):
+    # initialize end_time to current time if not provided
+    if end_time is None:
+        end_time = datetime.datetime.now()
+    if start_time is None:
+        start_time = datetime.datetime(1970, 1, 1)
+    return get_recordings(db, start_time, end_time)
 
 @router.post("/recordings/", tags=["recordings"])
 async def post_recording(

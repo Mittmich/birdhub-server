@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.data.crud import get_all_detections
 from .utils import get_session
 
@@ -15,7 +16,7 @@ def test_add_detection(client):
             "detections": [
                 {
                     "detected_class": "pigeon",
-                    "detection_timestamp": "2021-01-01T00:00:00",
+                    "detection_timestamp": datetime(2021, 5, 1, 10, 12).strftime("%Y-%m-%dT%H:%M:%S"),
                     "confidence": 0.9,
                 }
             ],
@@ -29,7 +30,7 @@ def test_add_detection(client):
     assert len(detections) == 1
     assert detections[0].detected_class == "pigeon"
     assert detections[0].confidence == 0.9
-
+    assert detections[0].detection_timestamp == datetime(2021, 5, 1, 10, 12)
 
 def test_read_all_detections(client):
     # add 3 detections to database
