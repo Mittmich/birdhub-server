@@ -1,4 +1,5 @@
 from fastapi.logger import logger
+import datetime
 from sqlalchemy.orm import Session
 from . import models, schemas
 
@@ -35,6 +36,16 @@ def add_effector_action(db: Session, effector_action: schemas.EffectorActionPost
     db.commit()
     return db_effector_action
 
+
+def get_recordings(db: Session, start_time: datetime.datetime, end_time: datetime.datetime):
+    return (
+        db.query(models.Recording)
+        .filter(models.Recording.recording_timestamp >= start_time)
+        .filter(models.Recording.recording_timestamp <= end_time)
+        .order_by(models.Recording.recording_timestamp.desc())
+        .all()
+    )
+    
 
 def get_all_recordings(db: Session):
     return db.query(models.Recording).all()
