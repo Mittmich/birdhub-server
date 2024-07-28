@@ -18,7 +18,8 @@ async def get_recordings_route(
     ):
     # initialize end_time to current time if not provided
     if end_time is None:
-        end_time = datetime.datetime.now()
+        # add end time as now plus one day for timezone differences
+        end_time = datetime.datetime.now() + datetime.timedelta(days=1)
     if start_time is None:
         start_time = datetime.datetime(1970, 1, 1)
     return get_recordings(db, start_time, end_time)
