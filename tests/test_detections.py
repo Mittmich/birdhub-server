@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.data.crud import get_all_detections
 from .utils import get_session
 
@@ -98,3 +98,37 @@ def test_read_detections_time_range(client):
     )
     assert response.status_code == 200
     assert len(response.json()) == 2
+
+
+def test_get_detection_stats(client):
+    # add 3 detections to database
+    today = datetime.now()
+    response = client.post(
+        "/detections/",
+        json={
+            "detections": [
+                {
+                    "detected_class": "pigeon",
+                    "detection_timestamp": today.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.9,
+                    "model_version": "v1",
+                },
+                {
+                    "detected_class": "sparrow",
+                    "detection_timestamp": (today - timedelta(days=6)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.8,
+                    "model_version": "v1",
+                },
+                {
+                    "detected_class": "crow",
+                    "detection_timestamp": (today - timedelta(days=29)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.7,
+                    "model_version": "v1",
+                },
+            ]
+        },
+    )
+    # test get detection stats
+    response = client.get("/detections/stats/")
+    assert response.status_code == 200
+    assert response.json() == {"today": 1, "7_days": 2, "30_days": 3}
