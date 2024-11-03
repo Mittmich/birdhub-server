@@ -5,3 +5,4 @@ pydantic-settings
 alembic
 python-dotenv
 pytest
+python-multipart
