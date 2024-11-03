@@ -33,7 +33,7 @@
                 <div class="card" style="width: 18rem;">
                     <div class="card-body">
                         <h5 class="card-title
-                        ">Detections in the last 24 hours</h5>
+                        ">Detections in the last 30 days</h5>
                         
                         <p class="card-text">0</p>
                     </div>
@@ -47,9 +47,9 @@
 fetch('/api/detections/stats/')
     .then(response => response.json())
     .then(data => {
-        document.querySelector('.card:nth-child(1) .card-text').textContent = data.today;
-        document.querySelector('.card:nth-child(2) .card-text').textContent = data.last_week;
-        document.querySelector('.card:nth-child(3) .card-text').textContent = data.last_24_hours;
+        document.querySelector('.col-sm:nth-child(1) .card-text').textContent = data.today;
+        document.querySelector('.col-sm:nth-child(2) .card-text').textContent = data['7_days'];
+        document.querySelector('.col-sm:nth-child(3) .card-text').textContent = data['30_days'];
     });
 </script>
 </html>
