@@ -1,6 +1,7 @@
 from fastapi.logger import logger
 import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 from . import models, schemas
 
 
@@ -92,6 +93,30 @@ def get_detections_time_range(db: Session, start_time: str, end_time: str):
         .all()
     )
 
+def _get_date_format_string(interval: str):
+    if interval == "day":
+        return "%Y-%m-%d"
+    elif interval == "week":
+        return "%Y-%W"
+    elif interval == "month":
+        return "%Y-%m"
+    elif interval == "year":
+        return "%Y"
+    else:
+        raise ValueError(f"Unsupported interval: {interval}")
+
+# get detections per day in date range
+def aggregate_detections_per_interval(db: Session, start_time: str, end_time: str, interval: str):
+    return (
+        db.query(
+            func.strftime(_get_date_format_string(interval), models.Detection.detection_timestamp).label(interval),
+            func.count(models.Detection.id).label("count")
+        )
+        .filter(models.Detection.detection_timestamp >= start_time)
+        .filter(models.Detection.detection_timestamp <= end_time)
+        .group_by(func.strftime(_get_date_format_string(interval), models.Detection.detection_timestamp))
+        .all()
+    )
 
 def get_all_detections(db: Session):
     return db.query(models.Detection).all()

@@ -132,3 +132,83 @@ def test_get_detection_stats(client):
     response = client.get("/detections/stats/")
     assert response.status_code == 200
     assert response.json() == {"today": 1, "7_days": 2, "30_days": 3}
+
+def test_get_detections_per_interval_days(client):
+    """Get detections per interval"""
+    # setup
+    today = datetime.now()
+    response = client.post(
+        "/detections/",
+        json={
+            "detections": [
+                {
+                    "detected_class": "pigeon",
+                    "detection_timestamp": today.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.9,
+                    "model_version": "v1",
+                },
+                {
+                    "detected_class": "sparrow",
+                    "detection_timestamp": (today - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.8,
+                    "model_version": "v1",
+                },
+                {
+                    "detected_class": "crow",
+                    "detection_timestamp": (today - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.7,
+                    "model_version": "v1",
+                },
+            ]
+        },
+    )
+    # test get detections per interval
+    start_date = (today - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S")
+    end_date = today.strftime("%Y-%m-%dT%H:%M:%S")
+    response = client.get(f"/detections/aggregates/?start={start_date}&end={end_date}&interval=day")
+    assert response.status_code == 200
+    assert response.json() == [
+        {"timestamp": (today - timedelta(days=2)).strftime("%Y-%m-%d"), "count": 1},
+        {"timestamp": (today - timedelta(days=1)).strftime("%Y-%m-%d"), "count": 1},
+        {"timestamp": today.strftime("%Y-%m-%d"), "count": 1},
+    ]
+
+def test_detections_per_interval_months(client):
+    """Get detections per interval"""
+    # setup
+    today = datetime.now()
+    response = client.post(
+        "/detections/",
+        json={
+            "detections": [
+                {
+                    "detected_class": "pigeon",
+                    "detection_timestamp": today.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.9,
+                    "model_version": "v1",
+                },
+                {
+                    "detected_class": "sparrow",
+                    "detection_timestamp": (today - timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.8,
+                    "model_version": "v1",
+                },
+                {
+                    "detected_class": "crow",
+                    "detection_timestamp": (today - timedelta(days=60)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "confidence": 0.7,
+                    "model_version": "v1",
+                },
+            ]
+        },
+    )
+    # test get detections per interval
+    start_date = (today - timedelta(days=60)).strftime("%Y-%m-%dT%H:%M:%S")
+    end_date = today.strftime("%Y-%m-%dT%H:%M:%S")
+    response = client.get(f"/detections/aggregates/?start={start_date}&end={end_date}&interval=month")
+    assert response.status_code == 200
+    assert response.json() == [
+        {"timestamp": (today - timedelta(days=60)).strftime("%Y-%m"), "count": 1},
+        {"timestamp": (today - timedelta(days=30)).strftime("%Y-%m"), "count": 1},
+        {"timestamp": today.strftime("%Y-%m"), "count": 1},
+    ]

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from datetime import datetime, timedelta
 from typing import Optional
-from ..data.crud import add_detections, get_detections_time_range, get_all_detections
+from ..data.crud import add_detections, get_detections_time_range, get_all_detections, aggregate_detections_per_interval
 from ..data.schemas import DetectionPost, DetectionGet
 from ..data.database import get_db
 
@@ -44,3 +44,12 @@ async def get_detection_stats(db=Depends(get_db)):
         "7_days": len(detections_7_days),
         "30_days": len(detections_30_days),
     }
+
+@router.get("/detections/aggregates/", tags=["detections"])
+async def get_detections_per_interval(
+    start: datetime, end: datetime, interval: str, db=Depends(get_db)
+):
+    """Get the number of detections per interval in a given time range."""
+    results = aggregate_detections_per_interval(db, start, end, interval)
+    return [{"timestamp": result[0], "count": result[1]} for result in results]
+    
