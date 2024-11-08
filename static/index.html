@@ -108,12 +108,25 @@
                     .append("div")
                     .attr("class", "tooltip")
                     .style("opacity", 0);
+                // Add gradient definition after SVG creation
+                const gradient = svg.append("defs")
+                    .append("linearGradient")
+                    .attr("id", "bar-gradient")
+                    .attr("x1", "0%")
+                    .attr("x2", "0%")
+                    .attr("y1", "100%")
+                    .attr("y2", "0%");
+                gradient.append("stop")
+                    .attr("offset", "0%")
+                    .attr("style", "stop-color:#90caf9;stop-opacity:1");
+                gradient.append("stop")
+                    .attr("offset", "100%")
+                    .attr("style", "stop-color:#1976d2;stop-opacity:1");
                 // Parse the date and count
                 data.forEach(d => {
                     d.date = parseTime(d.timestamp);
                     d.count = +d.count;
                 });
-
                 // Fill in missing dates with 0 count
                 const dateSet = new Set(data.map(d => d.date.getTime()));
                 for (let d = twoWeeksAgo; d <= today; d.setDate(d.getDate() + 1)) {
@@ -121,7 +134,6 @@
                         data.push({ date: new Date(d), count: 0 });
                     }
                 }
-
                 // Sort data by date
                 data.sort((a, b) => a.date - b.date);
                 x.domain(d3.extent(data, d => d.date));
@@ -130,30 +142,65 @@
                 svg.append('g')
                     .attr('transform', `translate(0, ${height})`)
                     .call(d3.axisBottom(x)
-                        .ticks(5)  // reduce number of ticks
+                        .ticks(4)  // reduce number of ticks
                         .tickFormat(d3.timeFormat("%m/%d")))  // shorter date format
+                    .call(
+                        g => {
+                            g.select(".domain").remove();
+                            g.selectAll(".tick line").remove();  // Remove tick marks
+                        }
+                    )  // Remove the vertical line
                     .selectAll("text")  
                     .style("font-size", "20px")  // larger font size
                     .style("text-anchor", "end")
-                    .attr("dx", "-.8em")
-                    .attr("dy", ".15em")
+                    .attr("dx", "-.1em")
+                    .attr("dy", ".2em")
                     .attr("transform", "rotate(-45)");  // rotate labels 45 degrees
                 // create y axis
                 svg.append('g')
                     .call(d3.axisLeft(y)
                         .ticks(5))  // reduce number of ticks
+                    .call(
+                        g => {
+                            g.select(".domain").remove();
+                            g.selectAll(".tick line").remove();  // Remove tick marks
+                        }
+                    )  // Remove the vertical line
                     .selectAll("text")
                     .style("font-size", "20px");  // larger font
-                svg.selectAll('.bar')
+                // add horizontal grid lines
+                svg.append('g')
+                    .attr('class', 'grid')
+                    .call(d3.axisLeft(y)
+                        .ticks(5)
+                        .tickSize(-width)  // Make lines span full width
+                        .tickFormat('')  // No labels (already added above)
+                    )
+                    .style('stroke', '#e0e0e0')  // Light grey color
+                    .style('stroke-width', '2px')  // Increase stroke width
+                    .style('stroke-opacity', 0.1)
+                    .call(g => g.select(".domain").remove());  // Remove vertical line
+                // add bars
+                const bars = svg.selectAll('.bar')
                     .data(data)
                     .enter().append('rect')
                     .attr('class', 'bar')
-                    .attr('x', d => x(d.date))
-                    .attr('y', d => y(d.count))
+                    .attr('x', d => x(d.date) - 10)
+                    .attr('y', height)
                     .attr('width', 20) // Set a fixed width for the bars
-                    .attr('height', d => height - y(d.count))
-                    .attr('fill', 'steelblue')
-                    .on('mouseover', function(event, d) {
+                    .attr('height', 0)  // Start with 0 height
+                    .attr('rx', 3)  // horizontal corner radius
+                    .attr('ry', 3)  // vertical corner radius
+                    .attr('fill', 'url(#bar-gradient)');
+                
+                // Add animation
+                bars.transition()
+                    .duration(500)
+                    .delay((d, i) => i * 20)
+                    .attr('y', d => y(d.count))
+                    .attr('height', d => height - y(d.count));
+                // add mouseover and mouseout events
+                bars.on('mouseover', function(event, d) {
                         const screenCenter = window.innerWidth / 2;
                         const tooltipOffset = 10;
 
@@ -171,12 +218,12 @@
                             (event.pageX - tooltip.node().offsetWidth - tooltipOffset) : 
                             (event.pageX + tooltipOffset)) + "px")
                         .style("top", (event.pageY - 28) + "px");
-                    })
-                    .on('mouseout', function() {
+                    });
+                bars.on('mouseout', function() {
                         d3.select(this)
                             .transition()
                             .duration(500)
-                            .style("fill", "steelblue");
+                            .style("fill", 'url(#bar-gradient)');
                             
                         tooltip.transition()
                             .duration(500)
