@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Birdhub</title>
     <!--#include virtual="/include_bootstrap.html" -->
 </head>
+
 <body style="overflow: auto; ">
     <!--#include virtual="/navigation.html" -->
-
     <div class="container" style="margin-top: 20px;">
         <div class="row">
             <div class="col-sm d-flex justify-content-center" style="margin-top: 20px;">
@@ -34,22 +35,185 @@
                     <div class="card-body">
                         <h5 class="card-title
                         ">Detections in the last 30 days</h5>
-                        
+
                         <p class="card-text">0</p>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+        <!--Add empty div for d3.js graph-->
+        <div class="row">
+            <div class="col-sm d-flex justify-content-center" style="margin-top: 20px;">
+                <div id="detection-two-weeks" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="col-sm d-flex justify-content-center" style="margin-top: 20px;">
+                <div id="detection-6-months" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
 </body>
 <script>
-// fetch statistics and update cards
-fetch('/api/detections/stats/')
-    .then(response => response.json())
-    .then(data => {
-        document.querySelector('.col-sm:nth-child(1) .card-text').textContent = data.today;
-        document.querySelector('.col-sm:nth-child(2) .card-text').textContent = data['7_days'];
-        document.querySelector('.col-sm:nth-child(3) .card-text').textContent = data['30_days'];
-    });
+    // fetch statistics and update cards
+    fetch('/api/detections/stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.querySelector('.col-sm:nth-child(1) .card-text').textContent = data.today;
+            document.querySelector('.col-sm:nth-child(2) .card-text').textContent = data['7_days'];
+            document.querySelector('.col-sm:nth-child(3) .card-text').textContent = data['30_days'];
+        });
+    // define a function to draw the graph
+    function drawTwoWeekGrapth() {
+        const today = new Date();
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(today.getDate() - 14);
+        const formatDate = date => date.toISOString().split('T')[0];
+        fetch(`/api/detections/aggregates/?start=${formatDate(twoWeeksAgo)}&end=${formatDate(today)}&interval=day`)
+            .then(response => response.json())
+            .then(data => {
+                const margin = { top: 40, right: 30, bottom: 60, left: 60 },
+                width = 600 - margin.left - margin.right,
+                height = 400 - margin.top - margin.bottom;
+                const parseTime = d3.timeParse('%Y-%m-%d');
+                const x = d3.scaleTime().range([0, width]);
+                const y = d3.scaleLinear().range([height, 0]);
+                const svg = d3.select('#detection-two-weeks')
+                                .append("div")
+                                // Container class to make it responsive.
+                                .classed("svg-container", true) 
+                                .append("svg")
+                                // Responsive SVG needs these 2 attributes and no width and height attr.
+                                .attr("preserveAspectRatio", "xMinYMin meet")
+                                .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+                                // Class to make it responsive.
+                                .classed("svg-content-responsive", true)
+                                .append('g')
+                                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+                // add title
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", 0 - (margin.top / 2))
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "26px")
+                    .text("Detections in the Last Two Weeks");
+                // Add Y axis label
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left)
+                    .attr("x", 0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("font-size", "20px")
+                    .style("text-anchor", "middle")
+                    .text("Number of Detections");
+                // add tooltip
+                const tooltip = d3.select("#detection-two-weeks")
+                    .append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0);
+                // Parse the date and count
+                data.forEach(d => {
+                    d.date = parseTime(d.timestamp);
+                    d.count = +d.count;
+                });
+
+                // Fill in missing dates with 0 count
+                const dateSet = new Set(data.map(d => d.date.getTime()));
+                for (let d = twoWeeksAgo; d <= today; d.setDate(d.getDate() + 1)) {
+                    if (!dateSet.has(d.getTime())) {
+                        data.push({ date: new Date(d), count: 0 });
+                    }
+                }
+
+                // Sort data by date
+                data.sort((a, b) => a.date - b.date);
+                x.domain(d3.extent(data, d => d.date));
+                y.domain([0, d3.max(data, d => d.count)]);
+                // create x axis
+                svg.append('g')
+                    .attr('transform', `translate(0, ${height})`)
+                    .call(d3.axisBottom(x)
+                        .ticks(5)  // reduce number of ticks
+                        .tickFormat(d3.timeFormat("%m/%d")))  // shorter date format
+                    .selectAll("text")  
+                    .style("font-size", "20px")  // larger font size
+                    .style("text-anchor", "end")
+                    .attr("dx", "-.8em")
+                    .attr("dy", ".15em")
+                    .attr("transform", "rotate(-45)");  // rotate labels 45 degrees
+                // create y axis
+                svg.append('g')
+                    .call(d3.axisLeft(y)
+                        .ticks(5))  // reduce number of ticks
+                    .selectAll("text")
+                    .style("font-size", "20px");  // larger font
+                svg.selectAll('.bar')
+                    .data(data)
+                    .enter().append('rect')
+                    .attr('class', 'bar')
+                    .attr('x', d => x(d.date))
+                    .attr('y', d => y(d.count))
+                    .attr('width', 20) // Set a fixed width for the bars
+                    .attr('height', d => height - y(d.count))
+                    .attr('fill', 'steelblue')
+                    .on('mouseover', function(event, d) {
+                        const screenCenter = window.innerWidth / 2;
+                        const tooltipOffset = 10;
+
+                        d3.select(this)
+                            .transition()
+                            .duration(200)
+                            .style("fill", "#90caf9");
+                        
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                            
+                        tooltip.html(`Date: ${d3.timeFormat("%B %d, %Y")(d.date)}<br/>Count: ${d.count}`)
+                        .style("left", (event.pageX > screenCenter ? 
+                            (event.pageX - tooltip.node().offsetWidth - tooltipOffset) : 
+                            (event.pageX + tooltipOffset)) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this)
+                            .transition()
+                            .duration(500)
+                            .style("fill", "steelblue");
+                            
+                        tooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    });
+            });
+    }
+    // call the function to draw the graph
+    drawTwoWeekGrapth();
+    // add a resize event listener to redraw the graph when the window is resized
+    //window.addEventListener('resize', drawTwoWeekGrapth);
 </script>
+<style>
+.svg-container {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  padding-bottom: 75%; /* aspect ratio */
+  vertical-align: top;
+  overflow: visible;
+}
+.svg-content-responsive {
+  display: inline-block;
+  position: absolute;
+  top: 20px;
+  left: 0;
+}
+.tooltip {
+    position: absolute;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    transition: all 0.2s;
+    z-index: 1000;
+}
+</style>
 </html>
