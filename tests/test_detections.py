@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from app.data.crud import get_all_detections
+from sqlalchemy import text
 from .utils import get_session
 
 def test_read_main(client):
@@ -108,19 +109,19 @@ def test_get_detection_stats(client):
             "detections": [
                 {
                     "detected_class": "pigeon",
-                    "detection_timestamp": today.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": today.strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.9,
                     "model_version": "v1",
                 },
                 {
                     "detected_class": "sparrow",
-                    "detection_timestamp": (today - timedelta(days=6)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": (today - timedelta(days=6)).strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.8,
                     "model_version": "v1",
                 },
                 {
                     "detected_class": "crow",
-                    "detection_timestamp": (today - timedelta(days=29)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": (today - timedelta(days=29)).strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.7,
                     "model_version": "v1",
                 },
@@ -149,19 +150,19 @@ def test_get_detections_per_interval_days(client):
             "detections": [
                 {
                     "detected_class": "pigeon",
-                    "detection_timestamp": today.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": today.strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.9,
                     "model_version": "v1",
                 },
                 {
                     "detected_class": "sparrow",
-                    "detection_timestamp": (today - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": (today - timedelta(days=1)).strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.8,
                     "model_version": "v1",
                 },
                 {
                     "detected_class": "crow",
-                    "detection_timestamp": (today - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": (today - timedelta(days=2)).strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.7,
                     "model_version": "v1",
                 },
@@ -169,8 +170,8 @@ def test_get_detections_per_interval_days(client):
         },
     )
     # test get detections per interval
-    start_date = (today - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S")
-    end_date = today.strftime("%Y-%m-%dT%H:%M:%S")
+    start_date = (today - timedelta(days=2)).strftime("%Y-%m-%dT12:00:00")
+    end_date = today.strftime("%Y-%m-%dT12:00:00")
     response = client.get(f"/detections/aggregates/?start={start_date}&end={end_date}&interval=day")
     assert response.status_code == 200
     assert response.json() == [
@@ -189,19 +190,19 @@ def test_detections_per_interval_months(client):
             "detections": [
                 {
                     "detected_class": "pigeon",
-                    "detection_timestamp": today.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": today.strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.9,
                     "model_version": "v1",
                 },
                 {
                     "detected_class": "sparrow",
-                    "detection_timestamp": (today - timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": (today - timedelta(days=30)).strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.8,
                     "model_version": "v1",
                 },
                 {
                     "detected_class": "crow",
-                    "detection_timestamp": (today - timedelta(days=60)).strftime("%Y-%m-%dT%H:%M:%S"),
+                    "detection_timestamp": (today - timedelta(days=60)).strftime("%Y-%m-%dT12:00:00"),
                     "confidence": 0.7,
                     "model_version": "v1",
                 },
@@ -209,8 +210,8 @@ def test_detections_per_interval_months(client):
         },
     )
     # test get detections per interval
-    start_date = (today - timedelta(days=60)).strftime("%Y-%m-%dT%H:%M:%S")
-    end_date = today.strftime("%Y-%m-%dT%H:%M:%S")
+    start_date = (today - timedelta(days=60)).strftime("%Y-%m-%dT12:00:00")
+    end_date = today.strftime("%Y-%m-%dT12:00:00")
     response = client.get(f"/detections/aggregates/?start={start_date}&end={end_date}&interval=month")
     assert response.status_code == 200
     assert response.json() == [

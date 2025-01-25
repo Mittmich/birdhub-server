@@ -5,6 +5,7 @@ from functools import partial
 from fastapi.testclient import TestClient
 from app.main import app
 from app.data.database import get_db
+from sqlalchemy import text
 from .utils import set_up_db, clean_up_db, get_session
 from app.data.settings import get_settings_test, get_settings
 
@@ -13,6 +14,10 @@ from app.data.settings import get_settings_test, get_settings
 def db_setup():
     """Runs setup and teardown for the database before and after each test."""
     set_up_db()
+    # print sunrises and sunsets table
+    db = get_session()
+    result = db.execute(text("SELECT * FROM sunset_sunrise")).all()
+    print(f"\nBefore test: {len(result)}\n------------------------------------------\n")
     yield
     clean_up_db()
 
