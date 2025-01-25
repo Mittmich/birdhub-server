@@ -42,3 +42,16 @@ class Recording(Base):
     recording_end_timestamp = Column(DateTime, index=True)
     # add path to recording file
     recording_file_path = Column(String, index=True)
+
+
+class SunsetSunrise(Base):
+    """Model for sunset and sunrise times."""
+
+    __tablename__ = "sunset_sunrise"
+
+    id = Column(Integer, primary_key=True, index=True)
+    month = Column(Integer, index=True)
+    day = Column(Integer, index=True)
+    sunrise = Column(DateTime)
+    sunset = Column(DateTime)
+    city = Column(String, index=True)

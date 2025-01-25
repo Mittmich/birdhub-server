@@ -1,7 +1,8 @@
 from fastapi.logger import logger
 import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, cast
+from sqlalchemy import Integer
 from . import models, schemas
 
 
@@ -38,7 +39,9 @@ def add_effector_action(db: Session, effector_action: schemas.EffectorActionPost
     return db_effector_action
 
 
-def get_recordings(db: Session, start_time: datetime.datetime, end_time: datetime.datetime):
+def get_recordings(
+    db: Session, start_time: datetime.datetime, end_time: datetime.datetime
+):
     return (
         db.query(models.Recording)
         .filter(models.Recording.recording_timestamp >= start_time)
@@ -46,7 +49,7 @@ def get_recordings(db: Session, start_time: datetime.datetime, end_time: datetim
         .order_by(models.Recording.recording_timestamp.desc())
         .all()
     )
-    
+
 
 def get_all_recordings(db: Session):
     return db.query(models.Recording).all()
@@ -88,10 +91,30 @@ def add_detections(db: Session, detections: list[schemas.SingleDetectionPost]):
 def get_detections_time_range(db: Session, start_time: str, end_time: str):
     return (
         db.query(models.Detection)
+        .join(
+            models.SunsetSunrise,
+            (
+                models.SunsetSunrise.month
+            == cast(func.strftime("%m", models.Detection.detection_timestamp), Integer)
+            )
+            & 
+            ( models.SunsetSunrise.day
+            == cast(func.strftime("%d", models.Detection.detection_timestamp), Integer)
+            ),
+        )
+        # compare sunrise hour and minute with detection timestamp
+        .filter(
+            func.strftime("%H:%M", models.Detection.detection_timestamp) >= func.strftime("%H:%M", models.SunsetSunrise.sunrise)
+        )
+        # compare sunset hour and minute with detection timestamp
+        .filter(
+            func.strftime("%H:%M", models.Detection.detection_timestamp) <= func.strftime("%H:%M", models.SunsetSunrise.sunset)
+        )
         .filter(models.Detection.detection_timestamp >= start_time)
         .filter(models.Detection.detection_timestamp <= end_time)
         .all()
     )
+
 
 def _get_date_format_string(interval: str):
     if interval == "day":
@@ -105,18 +128,48 @@ def _get_date_format_string(interval: str):
     else:
         raise ValueError(f"Unsupported interval: {interval}")
 
+
 # get detections per day in date range
-def aggregate_detections_per_interval(db: Session, start_time: str, end_time: str, interval: str):
+def aggregate_detections_per_interval(
+    db: Session, start_time: str, end_time: str, interval: str
+):
     return (
         db.query(
-            func.strftime(_get_date_format_string(interval), models.Detection.detection_timestamp).label(interval),
-            func.count(models.Detection.id).label("count")
+            func.strftime(
+                _get_date_format_string(interval), models.Detection.detection_timestamp
+            ).label(interval),
+            func.count(models.Detection.id).label("count"),
+        )
+        # use sunrise sunset table to filter out night time detections for the specific date
+        .join(
+            models.SunsetSunrise,
+            (
+                models.SunsetSunrise.month
+            == cast(func.strftime("%m", models.Detection.detection_timestamp), Integer)
+            )
+            & 
+            ( models.SunsetSunrise.day
+            == cast(func.strftime("%d", models.Detection.detection_timestamp), Integer)
+            ),
+        )
+        # compare sunrise hour and minute with detection timestamp
+        .filter(
+            func.strftime("%H:%M", models.Detection.detection_timestamp) >= func.strftime("%H:%M", models.SunsetSunrise.sunrise)
+        )
+        # compare sunset hour and minute with detection timestamp
+        .filter(
+            func.strftime("%H:%M", models.Detection.detection_timestamp) <= func.strftime("%H:%M", models.SunsetSunrise.sunset)
         )
         .filter(models.Detection.detection_timestamp >= start_time)
         .filter(models.Detection.detection_timestamp <= end_time)
-        .group_by(func.strftime(_get_date_format_string(interval), models.Detection.detection_timestamp))
+        .group_by(
+            func.strftime(
+                _get_date_format_string(interval), models.Detection.detection_timestamp
+            )
+        )
         .all()
     )
+
 
 def get_all_detections(db: Session):
     return db.query(models.Detection).all()
